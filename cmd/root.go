@@ -31,8 +31,7 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:   "cryptkeeper",
 	Short: "An encrypted daily journal",
-	Long: `CryptKeeper is an encrypted daily journal centered around user privacy. 
-	Log your thoughts throughout the day without the fear of unwanted readers.`,
+	Long:  `CryptKeeper is an encrypted daily journal centered around user privacy.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -55,7 +54,7 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // initConfig reads in config file and ENV variables if set.
