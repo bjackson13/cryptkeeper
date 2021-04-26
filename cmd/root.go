@@ -32,7 +32,7 @@ var rootCmd = &cobra.Command{
 	Use:   "cryptkeeper",
 	Short: "An encrypted daily journal",
 	Long: `CryptKeeper is an encrypted daily journal centered around user privacy. 
-		Log your thoughts throughout the day without the fear of unwanted readers.`,
+	Log your thoughts throughout the day without the fear of unwanted readers.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
