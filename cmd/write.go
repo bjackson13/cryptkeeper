@@ -21,14 +21,28 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 )
 
+/**
+* Default values
+ */
+const DefaultEditor = "vim"
+
+var DefaultFileName string = time.Now().Format("2006-01-02_1504")
+
+/**
+* Flag variables
+ */
 var fileName string
 var passPhrase string
 var editor string
+
+// EditorResolver returns the editor to usebased on user preferrence or default
+type EditorResolver func() string
 
 // writeCmd represents the write command
 var writeCmd = &cobra.Command{
@@ -45,7 +59,8 @@ The default name for a file is <DATE>_<TIME>.ck`,
 			log.Fatal(err)
 		}
 
-		fmt.Print(string(journalBytes[:]))
+		fmt.Println(string(journalBytes[:]))
+		fmt.Println(fileName)
 	},
 }
 
@@ -61,26 +76,69 @@ func init() {
 	*	short hand: f
 	*	default: <DATE>_<TIME>.ck
 	 */
-	writeCmd.PersistentFlags().StringVarP(&fileName, "filename", "f", time.Now().Format("2006-01-02_1504"), "Sets the output file name. Default is <DATE>_<TIME>.ck")
+	writeCmd.PersistentFlags().StringVarP(&fileName, "filename", "f", DefaultFileName, "Sets the output file name. Default is <DATE>_<TIME>.ck")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	writeCmd.Flags().StringVarP(&passPhrase, "passphrase", "p", "", "Pass phrase used during enryption of log")
 	writeCmd.MarkFlagRequired("passphrase")
 
-	writeCmd.Flags().StringVarP(&editor, "editor", "e", "vim", "Allows you to change the ditor used to write files. Default is vim")
+	writeCmd.Flags().StringVarP(&editor, "editor", "e", DefaultEditor, "Allows you to change the ditor used to write files. Default is vim")
 }
 
 /**
-Open users preffered text editor to capture log
-*/
-func OpenEditor(filename string) error {
-	executable, err := exec.LookPath(editor)
+* Get the users prefered editor either from passed flag or default
+* TODO: Add ability to set editor in config file
+* Implements EditorResolver type
+ */
+func getPreferredEditor() string {
+	// Supported Editors
+	supportedEditors := []string{"vim", "vi", "code", "vsc", "nano"}
+
+	if editor == "" {
+		return DefaultEditor
+	}
+
+	// determine if requested editor is supported or not
+	isSupported := func() bool {
+		for _, val := range supportedEditors {
+			if editor == val {
+				return true
+			}
+		}
+		return false
+	}()
+
+	if !isSupported {
+		return DefaultEditor
+	}
+
+	return editor
+}
+
+/**
+* Appends needed arguments to certain editors that are required for proper functionality
+ */
+func resolveEditorArgs(command string, filename string) []string {
+	args := []string{filename}
+
+	if strings.Contains(command, "code") || strings.Contains(command, "vsc") {
+		args = append([]string{"--wait"}, args...)
+	}
+
+	return args
+}
+
+/**
+* Open users preffered text editor to capture log
+ */
+func OpenEditor(filename string, resolver EditorResolver) error {
+	executable, err := exec.LookPath(resolver())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cmd := exec.Command(executable, filename)
+	cmd := exec.Command(executable, resolveEditorArgs(executable, filename)...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -88,10 +146,10 @@ func OpenEditor(filename string) error {
 	return cmd.Run()
 }
 
-/*
-	Create a temporary file in a temp directory and open it in the users preffered editor.
-	Delete the temp file once we read in the contents of it
-*/
+/**
+* Create a temporary file in a temp directory and open it in the users preffered editor.
+* Delete the temp file once we read in the contents of it
+ */
 func GetEditorInput() ([]byte, error) {
 	file, err := ioutil.TempFile(os.TempDir(), "*")
 	if err != nil {
@@ -105,7 +163,7 @@ func GetEditorInput() ([]byte, error) {
 		return []byte{}, err
 	}
 
-	if OpenEditor(tempFile); err != nil {
+	if OpenEditor(tempFile, getPreferredEditor); err != nil {
 		return []byte{}, err
 	}
 
