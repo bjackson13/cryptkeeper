@@ -17,11 +17,18 @@ package cmd
 
 import (
 	"fmt"
-
+	"io/ioutil"
+	"log"
+	"os"
+	"os/exec"
 	"time"
 
 	"github.com/spf13/cobra"
 )
+
+var fileName string
+var passPhrase string
+var editor string
 
 // writeCmd represents the write command
 var writeCmd = &cobra.Command{
@@ -33,21 +40,79 @@ You may specify a custom file name and storage location.
 	
 The default name for a file is <DATE>_<TIME>.ck`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fileName, _ := cmd.PersistentFlags().GetString("filename")
-		fmt.Println(fileName + ".ck")
+		journalBytes, err := GetEditorInput()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Print(string(journalBytes[:]))
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(writeCmd)
 
-	// Here you will define your flags and configuration settings.
+	// Flags:
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	writeCmd.PersistentFlags().StringP("filename", "f", time.Now().Format("2006-01-02_1504"), "Sets the output file name. Default is <DATE>_<TIME>.ck")
+	//Persistent Flags:
+
+	/**
+	*	filename - changes the file name
+	*	short hand: f
+	*	default: <DATE>_<TIME>.ck
+	 */
+	writeCmd.PersistentFlags().StringVarP(&fileName, "filename", "f", time.Now().Format("2006-01-02_1504"), "Sets the output file name. Default is <DATE>_<TIME>.ck")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// writeCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	writeCmd.Flags().StringVarP(&passPhrase, "passphrase", "p", "", "Pass phrase used during enryption of log")
+	writeCmd.MarkFlagRequired("passphrase")
+
+	writeCmd.Flags().StringVarP(&editor, "editor", "e", "vim", "Allows you to change the ditor used to write files. Default is vim")
+}
+
+/**
+Open users preffered text editor to capture log
+*/
+func OpenEditor(filename string) error {
+	executable, err := exec.LookPath(editor)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cmd := exec.Command(executable, filename)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
+}
+
+/*
+	Create a temporary file in a temp directory and open it in the users preffered editor.
+	Delete the temp file once we read in the contents of it
+*/
+func GetEditorInput() ([]byte, error) {
+	file, err := ioutil.TempFile(os.TempDir(), "*")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tempFile := file.Name()
+	defer os.Remove(tempFile)
+
+	if err = file.Close(); err != nil {
+		return []byte{}, err
+	}
+
+	if OpenEditor(tempFile); err != nil {
+		return []byte{}, err
+	}
+
+	bytes, err := ioutil.ReadFile(tempFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return bytes, nil
 }
