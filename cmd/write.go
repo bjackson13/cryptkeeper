@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 NAME HERE <EMAIL ADDRESS>
+Copyright © 2021 Brennan Jackson btj9560@rit.edu
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -31,6 +29,7 @@ import (
 * Default values
  */
 const DefaultEditor = "vim"
+const FileExtension = ".ck"
 
 var DefaultFileName string = time.Now().Format("2006-01-02_1504")
 
@@ -41,7 +40,7 @@ var fileName string
 var passPhrase string
 var editor string
 
-// EditorResolver returns the editor to usebased on user preferrence or default
+// EditorResolver returns the editor to use based on user preferrence or default
 type EditorResolver func() string
 
 // writeCmd represents the write command
@@ -54,13 +53,15 @@ You may specify a custom file name and storage location.
 	
 The default name for a file is <DATE>_<TIME>.ck`,
 	Run: func(cmd *cobra.Command, args []string) {
-		journalBytes, err := GetEditorInput()
+		journalEntryAsBytes, err := GetEditorInput()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Println(string(journalBytes[:]))
-		fmt.Println(fileName)
+		err = os.WriteFile(fileName+FileExtension, journalEntryAsBytes, 0755)
+		if err != nil {
+			log.Fatal(err)
+		}
 	},
 }
 
@@ -92,7 +93,7 @@ func init() {
 * Implements EditorResolver type
  */
 func getPreferredEditor() string {
-	// Supported Editors
+	// Supported Editors - I have confirmed all of these
 	supportedEditors := []string{"vim", "vi", "code", "vsc", "nano"}
 
 	if editor == "" {
@@ -119,8 +120,8 @@ func getPreferredEditor() string {
 /**
 * Appends needed arguments to certain editors that are required for proper functionality
  */
-func resolveEditorArgs(command string, filename string) []string {
-	args := []string{filename}
+func resolveEditorArgs(command string, tempFilename string) []string {
+	args := []string{tempFilename}
 
 	if strings.Contains(command, "code") || strings.Contains(command, "vsc") {
 		args = append([]string{"--wait"}, args...)
@@ -151,7 +152,7 @@ func OpenEditor(filename string, resolver EditorResolver) error {
 * Delete the temp file once we read in the contents of it
  */
 func GetEditorInput() ([]byte, error) {
-	file, err := ioutil.TempFile(os.TempDir(), "*")
+	file, err := os.CreateTemp(os.TempDir(), "*")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -167,7 +168,7 @@ func GetEditorInput() ([]byte, error) {
 		return []byte{}, err
 	}
 
-	bytes, err := ioutil.ReadFile(tempFile)
+	bytes, err := os.ReadFile(tempFile)
 	if err != nil {
 		log.Fatal(err)
 	}
