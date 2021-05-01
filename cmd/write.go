@@ -61,7 +61,7 @@ The default name for a file is <DATE>_<TIME>.ck`,
 		}
 
 		//write encrypted input to file
-		err = os.WriteFile(fileName+FileExtension, encryptedJournal, 0755)
+		err = os.WriteFile(fileName+FileExtension, encryptedJournal, 0700)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -115,7 +115,7 @@ func DisplayOutputInEditor(plaintextJournal []byte) {
 		log.Fatal(err)
 	}
 
-	err = os.WriteFile(tempFile, plaintextJournal, 0755)
+	err = os.WriteFile(tempFile, plaintextJournal, 0700)
 	if err != nil {
 		log.Fatal(err)
 	}
