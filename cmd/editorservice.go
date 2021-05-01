@@ -98,3 +98,29 @@ func GetEditorInput() ([]byte, error) {
 
 	return bytes, nil
 }
+
+/**
+* Displays decrypted plain text journal in user prefered editor
+ */
+func DisplayOutputInEditor(plaintextJournal []byte) {
+	file, err := os.CreateTemp(os.TempDir(), "*")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tempFile := file.Name()
+	defer os.Remove(tempFile)
+
+	if err = file.Close(); err != nil {
+		log.Fatal(err)
+	}
+
+	err = os.WriteFile(tempFile, plaintextJournal, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if openEditor(tempFile, getPreferredEditor); err != nil {
+		log.Fatal(err)
+	}
+}
