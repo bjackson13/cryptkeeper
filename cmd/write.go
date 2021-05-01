@@ -48,12 +48,20 @@ You may specify a custom file name and storage location.
 	
 The default name for a file is <DATE>_<TIME>.ck`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// get the input from editor
 		journalEntryAsBytes, err := GetEditorInput()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		err = os.WriteFile(fileName+FileExtension, journalEntryAsBytes, 0755)
+		//encrypt using passphrase
+		encryptedJournal, err := EncryptJournal(journalEntryAsBytes, passPhrase)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		//write encrypted input to file
+		err = os.WriteFile(fileName+FileExtension, encryptedJournal, 0755)
 		if err != nil {
 			log.Fatal(err)
 		}
