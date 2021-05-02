@@ -25,6 +25,12 @@ import (
 	"github.com/spf13/viper"
 )
 
+/**
+* Default values
+ */
+const DefaultEditor = "vim"
+const FileExtension = ".ck"
+
 var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands

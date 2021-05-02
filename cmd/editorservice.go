@@ -111,12 +111,12 @@ func DisplayOutputInEditor(plaintextJournal []byte) {
 	tempFile := file.Name()
 	defer os.Remove(tempFile)
 
-	if err = file.Close(); err != nil {
+	err = os.WriteFile(tempFile, plaintextJournal, 0700)
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = os.WriteFile(tempFile, plaintextJournal, 0700)
-	if err != nil {
+	if err = file.Close(); err != nil {
 		log.Fatal(err)
 	}
 
