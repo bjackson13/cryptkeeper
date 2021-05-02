@@ -23,12 +23,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-/**
-* Default values
- */
-const DefaultEditor = "vim"
-const FileExtension = ".ck"
-
 var DefaultFileName string = time.Now().Format("2006-01-02_1504")
 
 /**
@@ -84,8 +78,8 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	writeCmd.Flags().StringVarP(&passPhrase, "passphrase", "p", "", "Pass phrase used during enryption of log")
+	writeCmd.Flags().StringVarP(&passPhrase, "passphrase", "p", "", "Pass phrase used during encryption of journal entry")
 	writeCmd.MarkFlagRequired("passphrase")
 
-	writeCmd.Flags().StringVarP(&editor, "editor", "e", DefaultEditor, "Allows you to change the ditor used to write files. Default is vim")
+	writeCmd.Flags().StringVarP(&editor, "editor", "e", DefaultEditor, "Allows you to change the editor used to write files. Default is vim")
 }
